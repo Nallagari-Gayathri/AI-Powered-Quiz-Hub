@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Welcome to Quiz Hub</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: url('bckimg.jpg');
+      min-height: 100vh;
+      width: 100%;
+      background-repeat: no-repeat;
+      background-size: cover; 
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .container {
+      background: rgb(36, 61, 72,0.7);
+      padding: 30px 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      max-width: 700px;
+      width: 100%;
+      margin-top: 30px;
+      
+    }
+    .container:hover{
+         background: rgb(36, 61, 72,0.9);
+        box-shadow: 0 10px 25px rgba(230, 183, 183, 0.5);
+        border: 1px solid white;
+    }
+    h2, h4 {
+      color: #c9b5b5;
+    }
+    .topic-card {
+      border: 2px solid transparent;
+      border-radius: 10px;
+      transition: 0.3s;
+      text-align: center;
+      padding: 20px;
+      cursor: pointer;
+      background-color: #e7dddd;
+    }
+    .topic-card:hover {
+      border-color: #0f41a5;
+      background-color: #e7f0fe;
+    }
+    .topic-card.selected {
+      background-color: #97bce1;
+      color: rgb(27, 75, 48);
+      font-weight: 500;
+    }
+    button.btn {
+      border-radius: 25px;
+      padding: 12px 0;
+      font-weight: 600;
+      font-size: 1.2rem;
+      width: 100%;
+      background-color: #2575fc;
+      border: none;
+      color: white;
+      transition: background-color 0.3s ease;
+      margin-top: 20px;
+    }
+    button.btn:hover {
+      background-color: #185bd8;
+      cursor: pointer;
+    }
+    #timer {
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: #2575fc;
+      margin-bottom: 20px;
+      text-align: right;
+    }
+    .option-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      margin: 6px 0;
+      padding: 10px 15px;
+      font-size: 1.05rem;
+      border-radius: 8px;
+      border: 1.5px solid #ccc;
+      background: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    .option-btn:hover {
+      background-color: #e7f0fe;
+      border-color: #2575fc;
+    }
+    .option-btn.selected {
+      color: white;
+      border-color: #000305;
+    }
+    #score-display {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #28a745;
+      text-align: center;
+    }
+    #start-quiz-btn{
+        margin: 15px 0px;
+        text-align: center;
+        border-radius: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="welcome-container">
+    <h2 id="welcome-msg">Welcome!</h2>
+    <p class="fw-semibold">Select a Quiz Topic</p>
+
+    <!-- Topic Cards -->
+    <div class="row g-3" id="topic-cards">
+      <div class="col-md-4">
+        <div class="topic-card" data-topic="Java">Java</div>
+      </div>
+      <div class="col-md-4">
+        <div class="topic-card" data-topic="Aptitude">Aptitude</div>
+      </div>
+      <div class="col-md-4">
+        <div class="topic-card" data-topic="C">C</div>
+      </div>
+      <div class="col-md-4">
+        <div class="topic-card" data-topic="C++">C++</div>
+      </div>
+      <div class="col-md-4">
+        <div class="topic-card" data-topic="Python">Python</div>
+      </div>
+      <div class="col-md-4">
+        <div class="topic-card" data-topic="HTML">HTML</div>
+      </div>
+    </div>
+
+    <button id="start-quiz-btn" disabled>Start Quiz</button>
+  </div>
+
+  <!-- Quiz Container -->
+  <div class="container" id="quiz-container" style="display:none;">
+    <div id="timer">Time Left: <span id="time-left">15</span> sec</div>
+    <h4 id="question-text"></h4>
+    <div id="options-container"></div>
+    <button id="next-btn" class="btn" disabled>Next Question</button>
+  </div>
+
+  <!-- Result Container -->
+  <div class="container" id="result-container" style="display:none;">
+    <h2>Quiz Completed!</h2>
+    <p id="score-display"></p>
+    <button id="restart-btn" class="btn btn-primary">Take Another Quiz</button>
+  </div>
+  
+
+ <script>
+  /*********************
+ * CONFIGURATIONS
+ *********************/
+const QUIZ_SETTINGS = {
+  questionTime: 15, // seconds
+  correctColor: "#28a745", // green
+  wrongColor: "#dc3545",   // red
+  maxQuestions: 3
+};
+
+/*********************
+ * DOM ELEMENTS
+ *********************/
+const welcomeMsg = document.getElementById('welcome-msg');
+const startQuizBtn = document.getElementById('start-quiz-btn');
+const topicCards = document.querySelectorAll('.topic-card');
+
+const welcomeContainer = document.getElementById('welcome-container');
+const quizContainer = document.getElementById('quiz-container');
+const resultContainer = document.getElementById('result-container');
+
+const timerEl = document.getElementById('time-left');
+const questionText = document.getElementById('question-text');
+const optionsContainer = document.getElementById('options-container');
+const nextBtn = document.getElementById('next-btn');
+const scoreDisplay = document.getElementById('score-display');
+const restartBtn = document.getElementById('restart-btn');
+
+/*********************
+ * QUIZ STATE
+ *********************/
+let selectedTopic = null;
+let questions = [];
+let currentQuestionIndex = 0;
+let score = 0;
+let timer = null;
+let timeLeft = QUIZ_SETTINGS.questionTime;
+
+/*********************
+ * QUESTION BANK
+ *********************/
+const questionBank = {
+  Java: [
+    { question: "What is the size of int in Java?", options: ["16 bit", "32 bit", "64 bit", "Depends on OS"], correctAnswer: 1 },
+    { question: "Which keyword is used for inheritance?", options: ["implements", "inherits", "extends", "super"], correctAnswer: 2 },
+    { question: "Which collection is synchronized?", options: ["ArrayList", "HashMap", "Vector", "HashSet"], correctAnswer: 2 },
+    { question: "Java is ...", options: ["Platform Dependent", "Platform Independent", "OS Dependent", "None"], correctAnswer: 1 },
+    { question: "Which method is the entry point of a Java program?", options: ["start()", "main()", "run()", "init()"], correctAnswer: 1 },
+    { question: "Which of these is not a Java primitive type?", options: ["byte", "short", "String", "long"], correctAnswer: 2 },
+    { question: "Which keyword is used to prevent inheritance?", options: ["stop", "final", "private", "protected"], correctAnswer: 1 },
+    { question: "Which exception is thrown when array index is out of bounds?", options: ["NullPointerException", "IndexOutOfBoundsException", "ArrayIndexOutOfBoundsException", "IOException"], correctAnswer: 2 },
+    { question: "Java bytecode is executed by?", options: ["JVM", "JRE", "JDK", "Compiler"], correctAnswer: 0 },
+    { question: "Which package contains the Scanner class?", options: ["java.util", "java.io", "java.net", "java.lang"], correctAnswer: 0 }
+  ],
+  Aptitude: [
+    { question: "25% of 200?", options: ["25", "50", "75", "100"], correctAnswer: 1 },
+    { question: "60 km/h for 3 hours covers?", options: ["120 km", "180 km", "200 km", "150 km"], correctAnswer: 1 },
+    { question: "What is 12 × 8?", options: ["96", "108", "86", "88"], correctAnswer: 0 },
+    { question: "Square root of 144?", options: ["10", "11", "12", "13"], correctAnswer: 2 },
+    { question: "If 3x = 12, x = ?", options: ["2", "3", "4", "5"], correctAnswer: 2 },
+    { question: "The average of 10, 20, 30 is?", options: ["15", "20", "25", "30"], correctAnswer: 1 },
+    { question: "What is 15% of 400?", options: ["40", "50", "60", "70"], correctAnswer: 2 },
+    { question: "If a train runs 60 km in 1.5 hours, its speed is?", options: ["30 km/h", "40 km/h", "45 km/h", "50 km/h"], correctAnswer: 2 },
+    { question: "Simplify: 100 ÷ (5 × 4)", options: ["4", "5", "6", "7"], correctAnswer: 1 },
+    { question: "What is 7² - 5²?", options: ["12", "20", "24", "28"], correctAnswer: 1 }
+  ],
+  C: [
+    { question: "Bitwise AND operator?", options: ["&", "|", "^", "&&"], correctAnswer: 0 },
+    { question: "Function to print in C?", options: ["print()", "printf()", "cout", "display()"], correctAnswer: 1 },
+    { question: "Default return type of a function in C?", options: ["void", "int", "float", "char"], correctAnswer: 1 },
+    { question: "Header file for printf()?", options: ["<stdio.h>", "<stdlib.h>", "<conio.h>", "<string.h>"], correctAnswer: 0 },
+    { question: "Which loop is guaranteed to run at least once?", options: ["for", "while", "do-while", "none"], correctAnswer: 2 },
+    { question: "What is sizeof(char) in C?", options: ["1 byte", "2 bytes", "4 bytes", "Depends on compiler"], correctAnswer: 0 },
+    { question: "How to declare a constant in C?", options: ["const int x;", "int const x;", "Both A and B", "constant int x;"], correctAnswer: 2 },
+    { question: "What does break statement do?", options: ["Skips to next iteration", "Stops the loop", "Ends program", "None"], correctAnswer: 1 },
+    { question: "Which specifier for float in printf?", options: ["%d", "%f", "%lf", "%c"], correctAnswer: 1 },
+    { question: "Which operator is used for pointer dereferencing?", options: ["&", "*", "->", "."], correctAnswer: 1 }
+  ],
+  "C++": [
+    { question: "Feature of C++?", options: ["Pointers", "Classes", "Function overloading", "All of the above"], correctAnswer: 3 },
+    { question: "Which symbol for scope resolution?", options: ["::", "->", ".", ":"], correctAnswer: 0 },
+    { question: "C++ is ...", options: ["Procedure Oriented", "Object Oriented", "Functional", "None"], correctAnswer: 1 },
+    { question: "Which keyword defines a constant?", options: ["const", "constant", "final", "static"], correctAnswer: 0 },
+    { question: "Which of these supports polymorphism?", options: ["Function overloading", "Operator overloading", "Virtual functions", "All of the above"], correctAnswer: 3 },
+    { question: "Which header defines cout?", options: ["<stdio.h>", "<iostream>", "<conio.h>", "<stdlib.h>"], correctAnswer: 1 },
+    { question: "What is the default access specifier for a class?", options: ["public", "private", "protected", "none"], correctAnswer: 1 },
+    { question: "What does new operator do?", options: ["Creates object", "Allocates memory", "Initializes variable", "Deletes memory"], correctAnswer: 1 },
+    { question: "Which keyword releases memory in C++?", options: ["free", "delete", "remove", "dispose"], correctAnswer: 1 },
+    { question: "Which concept hides internal details?", options: ["Abstraction", "Encapsulation", "Polymorphism", "Inheritance"], correctAnswer: 1 }
+  ],
+  Python: [
+    { question: "Output of print(type([]))?", options: ["<class 'list'>", "<class 'dict'>", "<class 'tuple'>", "<class 'set'>"], correctAnswer: 0 },
+    { question: "Python is ...", options: ["Compiled", "Interpreted", "Both", "None"], correctAnswer: 1 },
+    { question: "Which keyword is used to define a function?", options: ["func", "function", "def", "lambda"], correctAnswer: 2 },
+    { question: "Which data type is mutable?", options: ["tuple", "list", "str", "frozenset"], correctAnswer: 1 },
+    { question: "Which library is used for data analysis?", options: ["numpy", "pandas", "matplotlib", "scipy"], correctAnswer: 1 },
+    { question: "Which keyword is used for loops?", options: ["for", "while", "repeat", "loop"], correctAnswer: 0 },
+    { question: "What is the output of bool(0)?", options: ["True", "False", "0", "Error"], correctAnswer: 1 },
+    { question: "Which function gets user input?", options: ["read()", "input()", "get()", "scan()"], correctAnswer: 1 },
+    { question: "How to start a comment in Python?", options: ["//", "#", "/*", "--"], correctAnswer: 1 },
+    { question: "Which symbol is used for exponentiation?", options: ["^", "**", "//", "%%"], correctAnswer: 1 }
+  ],
+  HTML: [
+    { question: "HTML stands for?", options: ["Hyper Text Markup Language", "Home Tool Markup Language", "Hyperlinks and Text Markup Language", "Hyperlinking Text Marking Language"], correctAnswer: 0 },
+    { question: "Tag for largest heading?", options: ["<h6>", "<h1>", "<head>", "<h3>"], correctAnswer: 1 },
+    { question: "Which tag is used for inserting a line break?", options: ["<lb>", "<break>", "<br>", "<hr>"], correctAnswer: 2 },
+    { question: "HTML comments start with?", options: ["<!--", "//", "#", "/*"], correctAnswer: 0 },
+    { question: "Which tag is used for a hyperlink?", options: ["<link>", "<a>", "<href>", "<hyper>"], correctAnswer: 1 },
+    { question: "Which attribute sets image source?", options: ["src", "href", "alt", "link"], correctAnswer: 0 },
+    { question: "Which tag is used for table rows?", options: ["<row>", "<tr>", "<td>", "<th>"], correctAnswer: 1 },
+    { question: "Which tag is used for unordered list?", options: ["<ol>", "<ul>", "<li>", "<list>"], correctAnswer: 1 },
+    { question: "HTML is ...", options: ["Case sensitive", "Not case sensitive", "Depends on browser", "Depends on OS"], correctAnswer: 1 },
+    { question: "Which tag is used for inserting an image?", options: ["<src>", "<image>", "<img>", "<pic>"], correctAnswer: 2 }
+  ]
+};
+
+
+/*********************
+ * UTILITY FUNCTIONS
+ *********************/
+const getQueryParam = (param) => new URLSearchParams(window.location.search).get(param);
+
+const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
+
+const getRandomQuestions = (topic) => {
+  const pool = questionBank[topic] || [];
+  return shuffleArray(pool);
+};
+
+
+const updateWelcomeMessage = () => {
+  const userId = getQueryParam('userid');
+  welcomeMsg.textContent = userId
+    ? `Welcome to Quiz Hub, ${userId}!`
+    : `Welcome to Quiz Hub!`;
+};
+
+/*********************
+ * QUIZ FLOW
+ *********************/
+const startQuiz = () => {
+  questions = getRandomQuestions(selectedTopic);
+  if (!questions.length) {
+    alert('No questions available for this topic.');
+    return;
+  }
+  currentQuestionIndex = 0;
+  score = 0;
+  switchScreen(welcomeContainer, quizContainer);
+  showQuestion();
+  startTimer();
+};
+
+const showQuestion = () => {
+  clearInterval(timer);
+  timeLeft = QUIZ_SETTINGS.questionTime;
+  timerEl.textContent = timeLeft;
+  nextBtn.disabled = true;
+
+  const { question, options } = questions[currentQuestionIndex];
+  questionText.textContent = `Q${currentQuestionIndex + 1}. ${question}`;
+  optionsContainer.innerHTML = '';
+
+  options.forEach((opt, index) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => handleAnswer(index, btn));
+    optionsContainer.appendChild(btn);
+  });
+};
+
+const handleAnswer = (selectedIndex, btn) => {
+  const buttons = optionsContainer.querySelectorAll('button');
+  const correctIndex = questions[currentQuestionIndex].correctAnswer;
+
+  buttons.forEach(b => b.disabled = true);
+
+  if (selectedIndex === correctIndex) {
+    btn.style.border = "3px solid #28a745";
+    btn.style.backgroundColor = "#d4edda";
+    btn.innerHTML += ` <span style="font-size:18px; margin-left:8px;">✔</span>`;
+    score++;
+  } else {
+    btn.style.border = "3px solid #dc3545";
+    btn.style.backgroundColor = "#f8d7da";
+    btn.innerHTML += ` <span style="font-size:18px; margin-left:8px;">❌</span>`;
+
+    buttons[correctIndex].style.border = "3px solid #28a745";
+    buttons[correctIndex].style.backgroundColor = "#d4edda";
+    buttons[correctIndex].innerHTML += ` <span style="font-size:18px; margin-left:8px;">✔</span>`;
+  }
+
+  clearInterval(timer);
+  nextBtn.disabled = false;
+};
+
+const autoRevealAnswer = () => {
+  const buttons = optionsContainer.querySelectorAll('button');
+  const correctIndex = questions[currentQuestionIndex].correctAnswer;
+
+  buttons.forEach((btn, index) => {
+    btn.disabled = true;
+    if (index === correctIndex) {
+      btn.style.border = "3px solid #28a745";
+      btn.style.backgroundColor = "#d4edda";
+      btn.innerHTML += ` <span style="font-size:18px; margin-left:8px;">✔</span>`;
+    } else {
+      btn.style.border = "3px solid #dc3545";
+      btn.style.backgroundColor = "#f8d7da";
+      btn.innerHTML += ` <span style="font-size:18px; margin-left:8px;">✖</span>`;
+    }
+  });
+
+  nextBtn.disabled = false;
+};
+
+const startTimer = () => {
+  clearInterval(timer);
+  timer = setInterval(() => {
+    timeLeft--;
+    timerEl.textContent = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      autoRevealAnswer();
+    }
+  }, 1000);
+};
+
+const nextQuestion = () => {
+  currentQuestionIndex++;
+  if (currentQuestionIndex < questions.length) {
+    showQuestion();
+    startTimer();
+  } else {
+    showResult();
+  }
+};
+
+const showResult = () => {
+  switchScreen(quizContainer, resultContainer);
+  scoreDisplay.textContent = `You scored ${score} out of ${questions.length}`;
+};
+
+const restartQuiz = () => {
+  switchScreen(resultContainer, welcomeContainer);
+  topicCards.forEach(c => c.classList.remove('selected'));
+  startQuizBtn.disabled = true;
+};
+
+const switchScreen = (hideEl, showEl) => {
+  hideEl.style.display = 'none';
+  showEl.style.display = 'block';
+};
+
+/*********************
+ * EVENT LISTENERS
+ *********************/
+topicCards.forEach(card => {
+  card.addEventListener('click', () => {
+    topicCards.forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedTopic = card.dataset.topic;
+    startQuizBtn.disabled = false;
+  });
+});
+
+startQuizBtn.addEventListener('click', startQuiz);
+nextBtn.addEventListener('click', nextQuestion);
+restartBtn.addEventListener('click', restartQuiz);
+
+/*********************
+ * INIT
+ *********************/
+updateWelcomeMessage();
+
+</script>
+
+
+
+</body>
+</html>
