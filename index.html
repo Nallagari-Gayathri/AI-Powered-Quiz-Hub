@@ -161,6 +161,10 @@
       <p class="mt-3 text-center text-white">
         Don't have an account? <span id="show-signup" class="toggle-link">Sign up</span>
       </p>
+      <div class="mb-3 form-check">
+  <input type="checkbox" class="form-check-input" id="login-show-password" />
+  <label class="form-check-label text-white" for="login-show-password">Show Password</label>
+</div>
     </form>
 
     <!-- Signup Form -->
@@ -177,6 +181,10 @@
       <p class="mt-3 text-center text-white">
         Already have an account? <span id="show-login" class="toggle-link">Login</span>
       </p>
+      <div class="mb-3 form-check">
+  <input type="checkbox" class="form-check-input" id="signup-show-password" />
+  <label class="form-check-label text-white" for="signup-show-password">Show Password</label>
+</div>
     </form>
 
     <div id="message"></div>
@@ -216,6 +224,8 @@
       e.preventDefault();
       const userid = document.getElementById("signup-userid").value.trim();
       const password = document.getElementById("signup-password").value;
+      const signupShowPassword = document.getElementById("signup-show-password");
+        
 
       let users = getUsers();
 
@@ -231,16 +241,25 @@
       messageDiv.textContent = "✅ Signup successful! You can now login.";
       signupForm.reset();
 
+
       signupForm.style.display = "none";
       loginForm.style.display = "block";
       formTitle.textContent = "Login";
+      signupShowPassword.addEventListener("change", () => {
+  signupPasswordInput.type = signupShowPassword.checked ? "text" : "password";
+});
     });
 
     loginForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const userid = document.getElementById("login-userid").value.trim();
       const password = document.getElementById("login-password").value;
+        const loginShowPassword = document.getElementById("login-show-password");
 
+loginShowPassword.addEventListener("change", () => {
+  loginPasswordInput.type = loginShowPassword.checked ? "text" : "password";});
+
+      
       let users = getUsers();
 
       if (!users[userid]) {
